@@ -25,4 +25,12 @@ router.get("/", protect, authorizeRoles("warden", "admin"), complaintController.
 // Admin/Warden update complaint
 router.put("/:id", protect, authorizeRoles("warden", "admin"), complaintController.updateComplaint);
 
+// Admin assigns complaint to a warden
+router.put(
+  "/:id/assign",
+  protect,
+  authorizeRoles("admin"), // only admin can assign
+  complaintController.assignComplaint
+);
+
 module.exports = router;

@@ -70,9 +70,28 @@ async function updateComplaint(req, res) {
     }
 }
 
+// Assign a complaint to a warden (Admin)
+async function assignComplaint(req, res) {
+  try {
+    const { wardenId } = req.body; // ID of the warden
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+
+    // Assign warden
+    complaint.assignedTo = wardenId;
+    await complaint.save();
+
+    res.status(200).json({ message: "Complaint assigned successfully", complaint });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
     createComplaint,
     getAllComplaints,
     getMyComplaints,
     updateComplaint,
+    assignComplaint
 };
