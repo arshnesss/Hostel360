@@ -8,16 +8,16 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ["admin", "warden", "student"], default: "student" },
 }, { timestamps: true });
 
-// Password hashing
-userSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) return next();
+// Pre-save hook for hashing password
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return; // no next()
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
 });
 
-userSchema.methods.matchPassword = async function(password) {
-    return await bcrypt.compare(password, this.password);
+// Method to compare password
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model("User", userSchema);
