@@ -3,41 +3,42 @@ import { useLoginMutation } from "../api/authApi";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../store/authSlice";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-hot-toast"; // ✅ import toast
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [login, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const res = await login({ email, password }).unwrap();
+    try {
+      const res = await login({ email, password }).unwrap();
 
-    dispatch(
-      setCredentials({
-        user: {
-          _id: res._id,
-          name: res.name,
-          email: res.email,
-          role: res.role,
-        },
-        token: res.token,
-      })
-    );
+      // Save user in Redux
+      dispatch(
+        setCredentials({
+          user: {
+            _id: res._id,
+            name: res.name,
+            email: res.email,
+            role: res.role,
+          },
+          token: res.token,
+        })
+      );
 
-    navigate("/dashboard");
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-  }
-};
-
-const dispatch = useDispatch();
-const navigate = useNavigate();
-
+      toast.success("Login successful! 🎉"); // ✅ toast on success
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      toast.error(err?.data?.message || "Login failed ❌"); // ✅ toast on error
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -50,14 +51,14 @@ const navigate = useNavigate();
         </h1>
 
         <input
-          className="w-full border p-2 mb-3 rounded"
+          className="w-full border p-2 mb-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
-          className="w-full border p-2 mb-4 rounded"
+          className="w-full border p-2 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           type="password"
           placeholder="Password"
           value={password}
@@ -65,11 +66,11 @@ const navigate = useNavigate();
         />
 
         <button
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
           type="submit"
           disabled={isLoading}
         >
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

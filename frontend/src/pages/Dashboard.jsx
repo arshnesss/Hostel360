@@ -1,42 +1,55 @@
-import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../store/authSlice";
+import { useSelector } from "react-redux";
+import Navbar from "../components/Navbar";
+import { useGetUserComplaintsQuery } from "../api/complaintApi";
+import SubmitComplaint from "../components/SubmitComplaint";
+import ComplaintList from "../components/ComplaintList";
 
 export default function Dashboard() {
-  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { data: complaints, isLoading } = useGetUserComplaintsQuery();
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">
-            Welcome, {user?.name || "User"} 👋
-          </h1>
+    <div className="min-h-screen bg-gray-100">
+      <Navbar />
 
-          <button
-            onClick={() => dispatch(logout())}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
+      <div className="max-w-4xl mx-auto p-6">
+        {/* Submit Complaint Form */}
+        <SubmitComplaint />
+
+        {/* Dashboard Cards */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">
+              Welcome, {user?.name || "User"} 👋
+            </h1>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-blue-100 rounded-lg">
+              <h2 className="font-semibold">Role</h2>
+              <p className="text-lg">{user?.role?.toUpperCase()}</p>
+            </div>
+
+            <div className="p-4 bg-green-100 rounded-lg">
+              <h2 className="font-semibold">Complaints</h2>
+              <p className="text-lg">
+                {isLoading ? "Loading..." : complaints?.length || 0}
+              </p>
+            </div>
+
+            <div className="p-4 bg-purple-100 rounded-lg">
+              <h2 className="font-semibold">Active</h2>
+              <p className="text-lg">
+                {isLoading
+                  ? "Loading..."
+                  : complaints?.filter((c) => c.status === "Active").length}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-blue-100 rounded-lg">
-            <h2 className="font-semibold">Role</h2>
-            <p className="text-lg">{user?.role}</p>
-          </div>
-
-          <div className="p-4 bg-green-100 rounded-lg">
-            <h2 className="font-semibold">Complaints</h2>
-            <p className="text-lg">Coming Soon 🚀</p>
-          </div>
-
-          <div className="p-4 bg-purple-100 rounded-lg">
-            <h2 className="font-semibold">Status</h2>
-            <p className="text-lg">Active</p>
-          </div>
-        </div>
+        {/* Complaint List */}
+        <ComplaintList complaints={complaints} isLoading={isLoading} />
       </div>
     </div>
   );
