@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboard from "./pages/AdminDashboard";
+import WardenDashboard from "./pages/WardenDashboard";
 
 function App() {
   return (
@@ -18,7 +20,29 @@ function App() {
             </ProtectedRoute>
           }
         />
+      <Route
+        path="/admin-dashboard"
+        element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/warden-dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["warden"]}>
+            <WardenDashboard />
+          </ProtectedRoute>
+        }
+      />
+
       </Routes>
+
+      
+    
+
   );
 }
 

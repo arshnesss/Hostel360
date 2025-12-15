@@ -27,18 +27,20 @@ async function createComplaint(req, res) {
     }
 }
 
-// Get all complaints (Admin/Warden)
 async function getAllComplaints(req, res) {
-    try {
-        const complaints = await Complaint.find()
-            .populate("student", "name email")
-            .populate("assignedTo", "name email");
-        res.status(200).json(complaints);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
-    }
+  try {
+    const complaints = await Complaint.find()
+      .populate("student", "name email")
+      .populate("warden", "name email"); // <-- corrected field
+
+    res.status(200).json(complaints);
+  } catch (err) {
+    console.error("Error in getAllComplaints:", err);
+    res.status(500).json({ message: "Server error fetching complaints" });
+  }
 }
+
+
 
 // Get complaints for logged-in student
 async function getMyComplaints(req, res) {
@@ -71,22 +73,30 @@ async function updateComplaint(req, res) {
 }
 
 // Assign a complaint to a warden (Admin)
-async function assignComplaint(req, res) {
+const assignComplaint = async (req, res) => {
   try {
-    const { wardenId } = req.body; // ID of the warden
-    const complaint = await Complaint.findById(req.params.id);
+    const { id } = req.params;
+    const { wardenId } = req.body;
+
+    const complaint = await Complaint.findById(id);
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    // Assign warden
-    complaint.assignedTo = wardenId;
+    // Assign the warden
+    complaint.warden = wardenId;
+
+    // Optionally, update status to "In Progress" automatically
+    if (!complaint.status || complaint.status === "Open") {
+      complaint.status = "In Progress";
+    }
+
     await complaint.save();
 
-    res.status(200).json({ message: "Complaint assigned successfully", complaint });
+    res.status(200).json(complaint); // send updated complaint back
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
-}
+};
 
 module.exports = {
     createComplaint,

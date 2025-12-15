@@ -4,33 +4,113 @@ const complaintController = require("../controllers/complaintController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const multer = require("multer");
 const { storage } = require("../utils/cloudinary");
+const Complaint = require("../models/Complaint");
 
 const upload = multer({ storage });
 
-// Student creates complaint with optional images
+// ===============================
+// STUDENT
+// ===============================
 router.post(
-    "/",
-    protect,
-    authorizeRoles("student"),
-    upload.array("images", 5), // max 5 images
-    complaintController.createComplaint
+  "/",
+  protect,
+  authorizeRoles("student"),
+  upload.array("images", 5),
+  complaintController.createComplaint
 );
 
-// Students view their complaints
-router.get("/me", protect, authorizeRoles("student"), complaintController.getMyComplaints);
+router.get(
+  "/me",
+  protect,
+  authorizeRoles("student"),
+  async (req, res) => {
+    try {
+      const complaints = await Complaint.find({ student: req.user._id })
+        .populate("warden", "name email")
+        .populate("comments.user", "name");
+      res.status(200).json(complaints);
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
 
-// Admin/Warden view all complaints
-router.get("/", protect, authorizeRoles("warden", "admin"), complaintController.getAllComplaints);
+// ===============================
+// ADMIN / WARDEN
+// ===============================
+router.get(
+  "/",
+  protect,
+  authorizeRoles("admin", "warden"),
+  async (req, res) => {
+    try {
+      const complaints = await Complaint.find()
+        .populate("student", "name email")
+        .populate("warden", "name email")
+        .populate("comments.user", "name");
+      res.status(200).json(complaints);
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
 
-// Admin/Warden update complaint
-router.put("/:id", protect, authorizeRoles("warden", "admin"), complaintController.updateComplaint);
+router.put(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "warden"),
+  complaintController.updateComplaint
+);
 
-// Admin assigns complaint to a warden
 router.put(
   "/:id/assign",
   protect,
-  authorizeRoles("admin"), // only admin can assign
+  authorizeRoles("admin"),
   complaintController.assignComplaint
+);
+
+// ===============================
+// WARDEN
+// ===============================
+router.get(
+  "/assigned",
+  protect,
+  authorizeRoles("warden"),
+  async (req, res) => {
+    try {
+      const complaints = await Complaint.find({ warden: req.user._id })
+        .populate("student", "name email")
+        .populate("comments.user", "name");
+      res.status(200).json(complaints);
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+router.put(
+  "/:id/comment",
+  protect,
+  authorizeRoles("warden", "admin"),
+  async (req, res) => {
+    try {
+      const complaint = await Complaint.findById(req.params.id);
+
+      complaint.comments.push({
+        text: req.body.comment,
+        user: req.user._id,
+      });
+
+      await complaint.save();
+
+      const updated = await Complaint.findById(req.params.id)
+        .populate("comments.user", "name");
+
+      res.status(200).json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
 );
 
 module.exports = router;

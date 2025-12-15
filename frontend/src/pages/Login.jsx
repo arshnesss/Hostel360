@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useLoginMutation } from "../api/authApi";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../store/authSlice";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast"; // ✅ import toast
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,7 +19,7 @@ export default function Login() {
     try {
       const res = await login({ email, password }).unwrap();
 
-      // Save user in Redux
+      // Save user + token in Redux
       dispatch(
         setCredentials({
           user: {
@@ -32,47 +32,63 @@ export default function Login() {
         })
       );
 
-      toast.success("Login successful! 🎉"); // ✅ toast on success
-      navigate("/dashboard");
+      toast.success("Login successful! 🎉");
+
+      // Redirect based on role
+      if (res.role === "admin") navigate("/admin-dashboard");
+      else if (res.role === "warden") navigate("/warden-dashboard");
+      else navigate("/dashboard"); // student
+
     } catch (err) {
       console.error("LOGIN ERROR:", err);
-      toast.error(err?.data?.message || "Login failed ❌"); // ✅ toast on error
+      toast.error(err?.data?.message || "Login failed ❌");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md w-80"
-      >
-        <h1 className="text-3xl font-bold text-blue-600 mb-4 text-center">
-          Login Page
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      {/* Login Card */}
+      <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+        <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">
+          Member Login
         </h1>
 
-        <input
-          className="w-full border p-2 mb-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
+          />
 
-        <input
-          className="w-full border p-2 mb-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
+          />
 
-        <button
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-blue-400 transition duration-150"
+          >
+            {isLoading ? "Validating Credentials..." : "Sign In"}
+          </button>
+        </form>
+
+        {/* Register Link */}
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Need an account?{" "}
+          <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold">
+            Register Here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

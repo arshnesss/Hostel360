@@ -7,14 +7,14 @@ export const complaintApi = createApi({
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth?.token;
       if (token) {
-        headers.set("authorization", `Bearer ${token}`);
+        headers.set("Authorization", `Bearer ${token}`);
       }
       return headers;
     },
   }),
   tagTypes: ["Complaint"],
-  endpoints: (builder) => ({
 
+  endpoints: (builder) => ({
     // ===============================
     // STUDENT
     // ===============================
@@ -23,7 +23,7 @@ export const complaintApi = createApi({
       query: (formData) => ({
         url: "/complaints",
         method: "POST",
-        body: formData, // supports FormData (images)
+        body: formData,
       }),
       invalidatesTags: ["Complaint"],
     }),
@@ -34,21 +34,12 @@ export const complaintApi = createApi({
     }),
 
     // ===============================
-    // WARDEN / ADMIN
+    // ADMIN
     // ===============================
 
     getAllComplaints: builder.query({
       query: () => "/complaints",
       providesTags: ["Complaint"],
-    }),
-
-    updateComplaint: builder.mutation({
-      query: ({ id, data }) => ({
-        url: `/complaints/${id}`,
-        method: "PUT",
-        body: data,
-      }),
-      invalidatesTags: ["Complaint"],
     }),
 
     assignComplaint: builder.mutation({
@@ -59,13 +50,52 @@ export const complaintApi = createApi({
       }),
       invalidatesTags: ["Complaint"],
     }),
+
+    // ===============================
+    // WARDEN
+    // ===============================
+
+    getAssignedComplaints: builder.query({
+      query: () => "/complaints/assigned",
+      providesTags: ["Complaint"],
+    }),
+
+    updateComplaintStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/complaints/${id}`,
+        method: "PUT",
+        body: { status },
+      }),
+      invalidatesTags: ["Complaint"],
+    }),
+
+    addComplaintComment: builder.mutation({
+    query: ({ id, comment }) => ({
+        url: `/complaints/${id}/comment`,
+        method: "PUT",
+        body: { comment },
+    }),
+    invalidatesTags: ["Complaint"],
+    }),
+
   }),
 });
 
+// ===============================
+// EXPORT HOOKS
+// ===============================
+
 export const {
+  // Student
   useCreateComplaintMutation,
   useGetUserComplaintsQuery,
+
+  // Admin
   useGetAllComplaintsQuery,
-  useUpdateComplaintMutation,
   useAssignComplaintMutation,
+
+  // Warden
+  useGetAssignedComplaintsQuery,
+  useUpdateComplaintStatusMutation,
+  useAddComplaintCommentMutation,
 } = complaintApi;

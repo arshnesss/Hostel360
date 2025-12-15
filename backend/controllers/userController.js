@@ -78,10 +78,22 @@ const deleteUser = async (req, res) => {
     }
 };
 
+
+async function getWardens(req, res) {
+  try {
+    const wardens = await User.find({ role: "warden" }).select("_id name email");
+    res.status(200).json(wardens);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
     getMyProfile,
     updateMyProfile,
     getAllUsers,
     updateUserRole,
     deleteUser,
+    getWardens,
 };

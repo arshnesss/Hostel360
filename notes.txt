@@ -1,0 +1,46 @@
+so authSlice checks the auth state, and protetced routes sees that stae and denies someone entry and we put that before loading dashboard in the app,jsx
+
+Extra Note
+Login.jsx updates authSlice → user is stored
+ProtectedRoute reads authSlice → decides access
+Dashboard.jsx reads authSlice → shows user info dynamically
+This is exactly how most React apps handle authentication.
+
+------------------------------------------------------------
+
+index.html runs, then react is loaded and mounted and it is directed to main.jsx where App renders and matched the url to the component and loads it
+URL changes
+ ↓
+App.jsx matches route
+ ↓
+Component renders
+ ↓
+Component calls backend API
+ ↓
+Backend responds
+ ↓
+UI updates
+and then if a button on is clicked on that component for example login, then we have the login keyword in the handleSubmit, it links to the authApi and there it matches and sends a req to the backend on the particular endpoint, then the endpoint matched in the server.js and is routed to the correct routes, which then see the exact url and match it with the particular controller
+correct flow
+
+--------------------------------------------------------
+
+🧠 What was happening
+
+When you logged in, user info lived only in Redux memory
+
+On refresh:
+Redux memory got wiped
+App forgot you were logged in
+ProtectedRoute kicked you to login
+
+✅ What we did
+Saved user + token in localStorage
+On app load, Redux reads from localStorage
+RTK Query automatically attaches token to API calls
+Protected routes now work even after refresh
+
+-----------------------------------------------------
+
+HOW DID ALL THE COMPLAINTS APPEAR INSTANTLY ON THE UI?
+do wehnever a call was being sent by the frontend, we said also invalidate the complaints
