@@ -1,3 +1,5 @@
+// frontend/src/api/adminApi.js (Updated)
+
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const adminApi = createApi({
@@ -35,6 +37,13 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Complaint"],
     }),
+    
+    // 4. *** NEW: Get Admin Analytics ***
+    getAnalytics: builder.query({
+      query: () => "/admin/analytics/complaints", // Hitting the backend endpoint
+      // We'll use the 'Complaint' tag since this data is related to complaints
+      providesTags: ["Complaint"], 
+    }),
   }),
 });
 
@@ -42,4 +51,6 @@ export const {
   useGetAllComplaintsQuery,
   useGetWardensQuery,
   useAssignComplaintMutation,
+  // *** NEW: Export the analytics hook ***
+  useGetAnalyticsQuery,
 } = adminApi;

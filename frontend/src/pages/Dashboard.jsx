@@ -30,78 +30,55 @@ export default function Dashboard() {
   const resolvedComplaints = totalComplaints - activeComplaints;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-base-100 text-base-content transition-colors duration-200">
       <Navbar />
 
-      {/* Increased Max Width to 7xl and Padding to p-10 */}
       <div className="max-w-7xl mx-auto p-4 md:p-10">
-        <h1 className="text-3xl font-extrabold text-gray-800 mb-8">
+        {/* Use text-base-content instead of text-gray-800 */}
+        <h1 className="text-3xl font-extrabold mb-8">
           Welcome back, {user?.name || "Student"} 👋
         </h1>
 
-        {/* --- MAIN LAYOUT GRID (Stats on Left, Submit Form on Right) --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-8">
           
-          {/* Left Column: Dashboard Info Cards (2/3 width on large screens) */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Stats Block (Increased Padding) */}
-            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-              {/* Data Summary Grid */}
-              <h2 className="text-2xl font-bold text-gray-700 mb-6 border-b pb-3">
+            {/* Swapped bg-white for bg-base-200 (Theme-aware card background) */}
+            <div className="bg-base-200 rounded-2xl shadow-xl p-8 border border-base-300 transition-colors duration-200">
+              <h2 className="text-2xl font-bold mb-6 border-b border-base-300 pb-3">
                 Your Complaint Summary
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 
-                {/* User Role Card - Increased Padding */}
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <h3 className="font-semibold text-blue-700 text-sm mb-1">
-                    Role
-                  </h3>
-                  <p className="text-2xl font-extrabold text-blue-900">
-                    {user?.role?.toUpperCase() || "N/A"}
-                  </p>
+                {/* Stats Cards: Removed hardcoded colors, used ghost backgrounds with borders */}
+                <div className="p-4 bg-base-300/50 rounded-xl border border-blue-500/30">
+                  <h3 className="font-semibold text-blue-500 text-sm mb-1 text-opacity-80">Role</h3>
+                  <p className="text-2xl font-extrabold">{user?.role?.toUpperCase() || "N/A"}</p>
                 </div>
 
-                {/* Total Complaints Card - Increased Padding */}
-                <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                  <h3 className="font-semibold text-green-700 text-sm mb-1">
-                    Total Submitted
-                  </h3>
-                  <p className="text-2xl font-extrabold text-green-900">
-                    {isLoading ? "..." : totalComplaints}
-                  </p>
+                <div className="p-4 bg-base-300/50 rounded-xl border border-green-500/30">
+                  <h3 className="font-semibold text-green-500 text-sm mb-1 text-opacity-80">Total Submitted</h3>
+                  <p className="text-2xl font-extrabold">{isLoading ? "..." : totalComplaints}</p>
                 </div>
 
-                {/* Active Complaints Card - Increased Padding */}
-                <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                  <h3 className="font-semibold text-yellow-700 text-sm mb-1">
-                    Active
-                  </h3>
-                  <p className="text-2xl font-extrabold text-yellow-900">
-                    {isLoading ? "..." : activeComplaints}
-                  </p>
+                <div className="p-4 bg-base-300/50 rounded-xl border border-yellow-500/30">
+                  <h3 className="font-semibold text-yellow-500 text-sm mb-1 text-opacity-80">Active</h3>
+                  <p className="text-2xl font-extrabold">{isLoading ? "..." : activeComplaints}</p>
                 </div>
 
-                {/* Resolved Complaints Card - Increased Padding */}
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                  <h3 className="font-semibold text-purple-700 text-sm mb-1">
-                    Resolved
-                  </h3>
-                  <p className="text-2xl font-extrabold text-purple-900">
-                    {isLoading ? "..." : resolvedComplaints}
-                  </p>
+                <div className="p-4 bg-base-300/50 rounded-xl border border-purple-500/30">
+                  <h3 className="font-semibold text-purple-500 text-sm mb-1 text-opacity-80">Resolved</h3>
+                  <p className="text-2xl font-extrabold">{isLoading ? "..." : resolvedComplaints}</p>
                 </div>
               </div>
             </div>
             
-            {/* Complaint List Display Area (Increased Title Size/Spacing) */}
-            <h2 className="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-3">
+            <h2 className="text-3xl font-extrabold mb-6 border-b border-base-300 pb-3">
                 My Complaints
             </h2>
 
-            {/* STATUS TABS */}
-            <div className="flex gap-4 justify-start mb-6 border-b border-gray-200 pb-2">
+            {/* Tab Container Background */}
+            <div className="flex gap-4 justify-start mb-6 border-b border-base-300 pb-2 overflow-x-auto">
               {TABS.map((tab) => (
                 <button
                   key={tab}
@@ -110,8 +87,8 @@ export default function Dashboard() {
                     px-6 py-3 rounded-xl text-lg font-bold transition-all duration-200
                     ${
                       activeTab === tab
-                        ? "bg-blue-600 text-white shadow-lg transform scale-105" // Larger active state
-                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        ? "bg-primary text-primary-content shadow-lg transform scale-105" 
+                        : "bg-base-200 text-base-content/70 hover:bg-base-300"
                     }
                   `}
                 >
@@ -120,13 +97,12 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Complaint List (with Loading/Error/Empty State handling) */}
             {isLoading ? (
-                <p className="text-center text-xl text-gray-600 py-12">Fetching your complaints...</p>
+                <p className="text-center text-xl py-12 opacity-70">Fetching your complaints...</p>
             ) : isError ? (
-                <p className="text-center text-xl text-red-600 py-12">An error occurred while loading your data.</p>
+                <p className="text-center text-xl text-error py-12 font-bold">An error occurred loading your data.</p>
             ) : filteredComplaints.length === 0 ? (
-                <p className="text-center text-xl text-gray-500 py-12">
+                <p className="text-center text-xl py-12 opacity-50 italic">
                     No **{activeTab}** complaints found.
                 </p>
             ) : (
@@ -137,9 +113,8 @@ export default function Dashboard() {
             )}
           </div>
           
-          {/* Right Column: Submit Complaint Form (1/3 width on large screens) */}
           <div className="lg:col-span-1">
-             <SubmitComplaint />
+              <SubmitComplaint />
           </div>
         </div>
       </div>

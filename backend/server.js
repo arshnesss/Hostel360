@@ -20,10 +20,11 @@ app.get("/", (req, res) => {
 });
 
 // Routes
-app.use("/api/admin", adminRoutes);
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/complaints", require("./routes/complaintRoutes"));
+app.use("/api/admin", adminRoutes);
 
 // Connect MongoDB
 const startServer = async () => {
