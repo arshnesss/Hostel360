@@ -3,65 +3,57 @@ const mongoose = require("mongoose");
 const complaintSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-
     description: { type: String, required: true },
-
     category: {
       type: String,
-      enum: ["plumbing", "electricity", "cleanliness", "internet", "security", "other"],
+      enum: ["plumbing", "electrical", "cleanliness", "internet", "security", "other"],
       required: true,
     },
-
     block: { 
       type: String, 
       required: true,
-      uppercase: true // Ensures "block a" becomes "BLOCK A"
+      uppercase: true 
     },
-
     status: {
       type: String,
-      enum: ["Open", "In Progress", "Resolved"],
+      // 🚨 ADDED "Critical" here
+      enum: ["Open", "In Progress", "Resolved", "Critical"], 
       default: "Open",
     },
-
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-
     warden: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
-
     comments: [
       {
         text: String,
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
-
     images: [String],
+    assignedAt: { type: Date, default: null },
+    resolvedAt: { type: Date, default: null },
 
-    // 🔥 PHASE 1 LIFECYCLE FIELDS (THIS WAS MISSING)
-    assignedAt: {
-      type: Date,
-      default: null,
+    // AI Triage & Escalation
+    urgency: {
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Low"
     },
-
-    resolvedAt: {
-      type: Date,
-      default: null,
-    },
+    aiTags: [String], 
+    
+    // 🚨 ADDED: To track AI-triggered warnings
+    isEscalated: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );

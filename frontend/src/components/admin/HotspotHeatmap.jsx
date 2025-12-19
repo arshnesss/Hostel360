@@ -2,9 +2,10 @@ import { useGetHotspotsQuery } from "../../api/adminApi";
 
 const Heatmap = () => {
   const { data: hotspots = [], isLoading } = useGetHotspotsQuery();
+  console.log("HOTSPOT DATA RECEIVED:", hotspots);
 
   const blocks = [...new Set(hotspots.map(h => h._id.block))];
-  const categories = ["plumbing", "electricity", "cleanliness", "internet", "security", "other"];
+  const categories = ["plumbing", "electrical", "cleanliness", "internet", "security", "other"];
 
   // Helper to get color intensity
   const getIntensity = (count) => {

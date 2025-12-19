@@ -1,29 +1,51 @@
 
 const Complaint = require("../models/Complaint");
 const {cloudinary} = require("../utils/cloudinary"); // Make sure this is imported!
+const { analyzeImage } = require('../utils/aiTriage');
 
 // Create a complaint (Student)
 async function createComplaint(req, res) {
     try {
         const { title, description, category, image, block } = req.body;
         let imageUrl = "";
+        let aiAnalysis = { urgency: 'Low', tags: [] };
+
+        // 1. 🚀 INSTANT TRIAGE (No Memory Usage)
+        // This ensures the Red Banner works even if AI fails
+        const hazardKeywords = ['fire', 'spark', 'electric', 'smoke', 'emergency', 'blast', 'short circuit'];
+        const textIsHazard = hazardKeywords.some(word => 
+            title.toLowerCase().includes(word) || 
+            description.toLowerCase().includes(word)
+        );
+        const categoryIsHazard = category.toLowerCase() === 'electricity';
 
         if (image) {
-            const uploadResponse = await cloudinary.uploader.upload(image, {
-                folder: "hostel_complaints",
-            });
+            const uploadResponse = await cloudinary.uploader.upload(image, { folder: "hostel_complaints" });
             imageUrl = uploadResponse.secure_url;
+
+            // 2. 🤖 ATTEMPT AI (But don't let it crash the request)
+            try {
+                // We run this, but if it hits that 72MB limit, we catch it
+                aiAnalysis = await analyzeImage(imageUrl);
+            } catch (aiErr) {
+                console.log("⚠️ AI Memory Limit Hit - Falling back to Text Triage");
+            }
         }
+
+        // 3. ⚖️ FINAL DECISION
+        // If text, category, OR AI says it's a hazard -> set to Critical
+        const isCritical = textIsHazard || categoryIsHazard || aiAnalysis.urgency === 'High';
 
         const complaint = await Complaint.create({
             student: req.user._id,
             title,
             description,
             category,
-            // 🚨 FIX: Match your model's field name 'images' (plural) 
-            // and wrap the URL in an array [ ]
             images: imageUrl ? [imageUrl] : [], 
-            block,
+            block: block || "General",
+            status: isCritical ? "Critical" : "Open", 
+            urgency: isCritical ? "High" : "Low",
+            aiTags: aiAnalysis.tags.length > 0 ? aiAnalysis.tags : ["Text-Triaged"]
         });
 
         res.status(201).json(complaint);
