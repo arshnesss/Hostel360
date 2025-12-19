@@ -52,3 +52,22 @@ h1, h2, h3, p {
 .animate-spin-slow:hover { 
   animation: spin 2s linear infinite; 
 }
+
+/* ------------------ */
+/* Force the root and body to follow DaisyUI theme variables */
+:root, body {
+  background-color: hsl(var(--b1)) !important;
+  color: hsl(var(--bc)) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* Remove any hardcoded white backgrounds from cards */
+.card, .bg-white {
+  background-color: hsl(var(--b2)) !important;
+  color: hsl(var(--bc)) !important;
+  border-color: hsl(var(--bc) / 0.1) !important;
+}
+
+/* index.css */
+

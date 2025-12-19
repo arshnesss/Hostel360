@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import WardenDashboard from "./pages/WardenDashboard";
+import Profile from "./pages/Profile";      
 
 function App() {
   return (
@@ -34,6 +35,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["warden"]}>
             <WardenDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

@@ -1,15 +1,18 @@
 
 const Complaint = require("../models/Complaint");
+const {cloudinary} = require("../utils/cloudinary"); // Make sure this is imported!
 
 // Create a complaint (Student)
 async function createComplaint(req, res) {
     try {
-        const { title, description, category } = req.body;
+        const { title, description, category, image } = req.body;
+        let imageUrl = "";
 
-        // If files uploaded, get their URLs
-        let images = [];
-        if (req.files) {
-            images = req.files.map(file => file.path);
+        if (image) {
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+                folder: "hostel_complaints",
+            });
+            imageUrl = uploadResponse.secure_url;
         }
 
         const complaint = await Complaint.create({
@@ -17,12 +20,14 @@ async function createComplaint(req, res) {
             title,
             description,
             category,
-            images,
+            // 🚨 FIX: Match your model's field name 'images' (plural) 
+            // and wrap the URL in an array [ ]
+            images: imageUrl ? [imageUrl] : [], 
         });
 
         res.status(201).json(complaint);
     } catch (err) {
-        console.error(err);
+        console.error("Submission Error:", err);
         res.status(500).json({ message: "Server error" });
     }
 }

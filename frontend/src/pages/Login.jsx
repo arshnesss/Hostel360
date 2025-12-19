@@ -1,17 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLoginMutation } from "../api/authApi";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../store/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { Sun, Moon } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Theme State
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   const [login, { isLoading }] = useLoginMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Theme Logic
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +35,6 @@ export default function Login() {
     try {
       const res = await login({ email, password }).unwrap();
 
-      // Save user + token in Redux
       dispatch(
         setCredentials({
           user: {
@@ -34,21 +49,34 @@ export default function Login() {
 
       toast.success("Login successful! 🎉");
 
-      // Redirect based on role
       if (res.role === "admin") navigate("/admin-dashboard");
       else if (res.role === "warden") navigate("/warden-dashboard");
-      else navigate("/dashboard"); // student
+      else navigate("/dashboard");
 
     } catch (err) {
-      console.error("LOGIN ERROR:", err);
       toast.error(err?.data?.message || "Login failed ❌");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      {/* Login Card */}
-      <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-base-100 p-4 transition-colors duration-200">
+      {/* Floating Theme Toggle */}
+      {/* Floating Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <button 
+          onClick={toggleTheme} 
+          className="btn btn-ghost btn-circle text-base-content hover:bg-base-300 transition-colors"
+          aria-label="Toggle Theme"
+        >
+          {theme === 'light' ? (
+            <Moon size={24} className="text-gray-600" /> 
+          ) : (
+            <Sun size={24} className="text-yellow-400" />
+          )}
+        </button>
+      </div>
+
+      <div className="bg-base-200 p-6 rounded-xl shadow-2xl w-full max-w-sm border border-base-300">
         <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">
           Member Login
         </h1>
@@ -60,7 +88,7 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
+            className="w-full bg-base-100 border border-base-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 text-base-content"
           />
 
           <input
@@ -69,7 +97,7 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150"
+            className="w-full bg-base-100 border border-base-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 text-base-content"
           />
 
           <button
@@ -81,8 +109,7 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Register Link */}
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-base-content opacity-70">
           Need an account?{" "}
           <Link to="/register" className="text-blue-600 hover:text-blue-700 font-bold">
             Register Here

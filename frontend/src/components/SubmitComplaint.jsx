@@ -66,10 +66,12 @@ export default function SubmitComplaint() {
             className="select select-bordered w-full bg-base-100 focus:outline-blue-500"
           >
             <option value="">Select Category</option>
-            <option value="electrical">Electrical</option>
+            <option value="electrical">Electricity</option>
             <option value="plumbing">Plumbing</option>
             <option value="internet">Internet</option>
             <option value="cleanliness">Cleanliness</option>
+            <option value="security">Security</option>
+            <option value="other">Other</option>
           </select>
         </div>
 
