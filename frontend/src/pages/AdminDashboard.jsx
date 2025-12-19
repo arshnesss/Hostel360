@@ -101,6 +101,14 @@ const AdminDashboard = () => {
       
       {/* ---------------- HEADER ---------------- */}
       <div className="max-w-7xl mx-auto flex justify-between items-center bg-base-200 p-4 rounded-2xl border border-base-300 mb-10">
+        <div className="flex items-center space-x-2">
+                        <div className="animate-spin-slow cursor-pointer text-primary">
+                            <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <span className="text-2xl font-black tracking-tighter">Hostel<span className="text-primary">360</span></span>
+                    </div>
         <div className="flex items-center gap-3">
           <span className="badge badge-lg bg-blue-600 text-white font-bold border-none">
             ADMIN

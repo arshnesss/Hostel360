@@ -62,8 +62,18 @@
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-base-100 p-4 transition-colors duration-200">
+        
         {/* Floating Theme Toggle */}
         {/* Floating Theme Toggle */}
+        {/* 🔵 BRAND – TOP LEFT */}
+        <div className="absolute top-6 left-6 flex items-center gap-3 select-none">
+          <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-black shadow-lg">
+            H
+          </div>
+          <span className="text-2xl font-black tracking-tight">
+            Hostel<span className="text-primary">360</span>
+          </span>
+        </div>
         <div className="absolute top-4 right-4">
           <button 
             onClick={toggleTheme} 
@@ -77,6 +87,10 @@
             )}
           </button>
         </div>
+
+         {/* ✨ BACKGROUND DECOR */}
+      <div className="absolute top-40 -right-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 -left-40 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
 
         <div className="bg-base-200 p-6 rounded-xl shadow-2xl w-full max-w-sm border border-base-300">
           <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">
