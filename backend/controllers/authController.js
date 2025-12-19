@@ -52,6 +52,7 @@ async function login(req, res) {
             name: user.name,
             email: user.email,
             role: user.role,
+            block: user.block,
             token: generateToken(user._id, user.role)
         });
     } catch (err) {

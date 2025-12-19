@@ -6,7 +6,12 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["admin", "warden", "student"], default: "student" },
+    block: { 
+        type: String, 
+        default: null // Only wardens (and maybe students) will have this
+    }
 }, { timestamps: true });
+
 
 // Pre-save hook for hashing password
 userSchema.pre("save", async function () {
