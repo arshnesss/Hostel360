@@ -119,11 +119,38 @@ async function deleteUser(req, res) {
   }
 }
 
+//heatmap controller
+async function getHotspotData(req, res) {
+  try {
+    const hotspots = await Complaint.aggregate([
+      {
+        // 1. Filter out any complaints that accidentally have a null block
+        $match: { block: { $exists: true, $ne: null } }
+      },
+      {
+        // 2. Group by the fields
+        $group: {
+          _id: { 
+            block: "$block", 
+            category: "$category" 
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    console.log("Aggregated Hotspots:", hotspots); // 👈 CHECK YOUR TERMINAL FOR THIS
+    res.status(200).json(hotspots);
+  } catch (err) {
+    res.status(500).json({ message: "Aggregation failed" });
+  }
+};
+
 module.exports = {
   getComplaintAnalytics,
   getAllWardens,
   getAllStudents,
   registerWarden,
   deleteUser,
-  deleteStudent
+  deleteStudent,
+  getHotspotData
 };

@@ -12,6 +12,12 @@ const complaintSchema = new mongoose.Schema(
       required: true,
     },
 
+    block: { 
+      type: String, 
+      required: true,
+      uppercase: true // Ensures "block a" becomes "BLOCK A"
+    },
+
     status: {
       type: String,
       enum: ["Open", "In Progress", "Resolved"],

@@ -80,6 +80,11 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Wardens"], // 🔥 List refreshes immediately
     }),
+
+    getHotspots: builder.query({
+      query: () => "/admin/hotspots",
+      providesTags: ["Complaint"],
+    }),
   }),
 });
 
@@ -93,4 +98,5 @@ export const {
   useCreateWardenMutation,
   useDeleteWardenMutation,
   useDeleteStudentMutation, // ✅ Export the new hook
+  useGetHotspotsQuery,
 } = adminApi;

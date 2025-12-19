@@ -5,7 +5,7 @@ const {cloudinary} = require("../utils/cloudinary"); // Make sure this is import
 // Create a complaint (Student)
 async function createComplaint(req, res) {
     try {
-        const { title, description, category, image } = req.body;
+        const { title, description, category, image, block } = req.body;
         let imageUrl = "";
 
         if (image) {
@@ -23,6 +23,7 @@ async function createComplaint(req, res) {
             // 🚨 FIX: Match your model's field name 'images' (plural) 
             // and wrap the URL in an array [ ]
             images: imageUrl ? [imageUrl] : [], 
+            block,
         });
 
         res.status(201).json(complaint);

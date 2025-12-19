@@ -9,6 +9,7 @@ const {
   registerWarden,
   deleteUser,
   deleteStudent,
+  getHotspotData
 } = require("../controllers/adminController");
 
 // Import your middleware
@@ -24,6 +25,7 @@ router.use(authorizeRoles("admin"));
 // --- Analytics ---
 // Matches the useGetAnalyticsQuery in the frontend
 router.get("/analytics/complaints", getComplaintAnalytics);
+router.get('/hotspots', protect, authorizeRoles("admin"), getHotspotData); // New Hotspot Route
 
 // --- User Management (Students) ---
 // Matches the useGetAllStudentsQuery
