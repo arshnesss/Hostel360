@@ -1,17 +1,32 @@
-
 const Complaint = require("../models/Complaint");
-const {cloudinary} = require("../utils/cloudinary"); // Make sure this is imported!
+const { cloudinary } = require("../utils/cloudinary");
 const { analyzeImage } = require('../utils/aiTriage');
 
-// Create a complaint (Student)
+// --- HELPER FUNCTION FOR SMART ESCALATION ---
+const calculatePriorityScore = (complaint) => {
+    const now = new Date();
+    const filedDate = new Date(complaint.createdAt);
+    const hoursStale = (now - filedDate) / (1000 * 60 * 60);
+
+    let baseWeight = 0;
+    // Critical status gets a massive boost
+    if (complaint.status === "Critical") baseWeight = 1000;
+    else if (complaint.urgency === "High") baseWeight = 500;
+    else if (complaint.urgency === "Medium") baseWeight = 250;
+
+    // Escalation: Add weight based on hours passed to push old tickets up
+    const escalation = hoursStale * 2; 
+
+    return baseWeight + escalation;
+};
+
+// 1. Create a complaint (Student)
 async function createComplaint(req, res) {
     try {
         const { title, description, category, image, block } = req.body;
         let imageUrl = "";
         let aiAnalysis = { urgency: 'Low', tags: [] };
 
-        // 1. 🚀 INSTANT TRIAGE (No Memory Usage)
-        // This ensures the Red Banner works even if AI fails
         const hazardKeywords = ['fire', 'spark', 'electric', 'smoke', 'emergency', 'blast', 'short circuit'];
         const textIsHazard = hazardKeywords.some(word => 
             title.toLowerCase().includes(word) || 
@@ -23,17 +38,13 @@ async function createComplaint(req, res) {
             const uploadResponse = await cloudinary.uploader.upload(image, { folder: "hostel_complaints" });
             imageUrl = uploadResponse.secure_url;
 
-            // 2. 🤖 ATTEMPT AI (But don't let it crash the request)
             try {
-                // We run this, but if it hits that 72MB limit, we catch it
                 aiAnalysis = await analyzeImage(imageUrl);
             } catch (aiErr) {
                 console.log("⚠️ AI Memory Limit Hit - Falling back to Text Triage");
             }
         }
 
-        // 3. ⚖️ FINAL DECISION
-        // If text, category, OR AI says it's a hazard -> set to Critical
         const isCritical = textIsHazard || categoryIsHazard || aiAnalysis.urgency === 'High';
 
         const complaint = await Complaint.create({
@@ -55,22 +66,28 @@ async function createComplaint(req, res) {
     }
 }
 
+// 2. ✅ FIXED: Get all complaints with SMART ESCALATION (Admin)
 async function getAllComplaints(req, res) {
   try {
-    const complaints = await Complaint.find()
+    // Fetch all complaints
+    const rawComplaints = await Complaint.find()
       .populate("student", "name email")
-      .populate("warden", "name email"); // <-- corrected field
+      .populate("warden", "name email");
 
-    res.status(200).json(complaints);
+    // Apply Priority Scoring and Sort
+    const sortedComplaints = rawComplaints.map(c => {
+        const score = calculatePriorityScore(c);
+        return { ...c._doc, priorityScore: score };
+    }).sort((a, b) => b.priorityScore - a.priorityScore);
+
+    res.status(200).json(sortedComplaints);
   } catch (err) {
     console.error("Error in getAllComplaints:", err);
     res.status(500).json({ message: "Server error fetching complaints" });
   }
 }
 
-
-
-// Get complaints for logged-in student
+// 3. Get complaints for logged-in student
 async function getMyComplaints(req, res) {
     try {
         const complaints = await Complaint.find({ student: req.user._id });
@@ -81,43 +98,31 @@ async function getMyComplaints(req, res) {
     }
 }
 
-// Update complaint status and add comments (Warden/Admin)
+// 4. Update complaint status and add comments (Warden/Admin)
 async function updateComplaint(req, res) {
   try {
     const { status, comment } = req.body;
 
     const complaint = await Complaint.findById(req.params.id);
-    if (!complaint) {
-      return res.status(404).json({ message: "Complaint not found" });
-    }
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    // ❌ Do not allow changes after resolved
     if (complaint.status === "Resolved") {
-      return res.status(400).json({
-        message: "Resolved complaints cannot be modified",
-      });
+      return res.status(400).json({ message: "Resolved complaints cannot be modified" });
     }
 
-    // ✅ Status update logic
     if (status) {
       complaint.status = status;
-
-      if (status === "Resolved") {
-        complaint.resolvedAt = new Date();
-      }
+      if (status === "Resolved") complaint.resolvedAt = new Date();
     }
 
-    // ✅ Comment logic (FIXED FIELD NAME)
     if (comment && comment.trim() !== "") {
       complaint.comments.push({
-        text: comment,           // ✅ MUST be "text"
+        text: comment,
         user: req.user._id,
       });
     }
 
     await complaint.save();
-
-    // ✅ Populate so frontend immediately sees comments
     await complaint.populate("comments.user", "name role");
 
     res.status(200).json(complaint);
@@ -127,38 +132,26 @@ async function updateComplaint(req, res) {
   }
 }
 
-
-// Assign a complaint to a warden (Admin)
+// 5. Assign a complaint to a warden (Admin)
 const assignComplaint = async (req, res) => {
   try {
     const { id } = req.params;
     const { wardenId } = req.body;
 
     const complaint = await Complaint.findById(id);
-    if (!complaint) {
-      return res.status(404).json({ message: "Complaint not found" });
-    }
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
-    // ✅ Assign warden
     complaint.warden = wardenId;
-
-    // ✅ Auto move to In Progress
-    if (complaint.status === "Open") {
-      complaint.status = "In Progress";
-    }
-
-    // 🔥 THIS WAS MISSING
+    if (complaint.status === "Open") complaint.status = "In Progress";
     complaint.assignedAt = new Date();
 
     await complaint.save();
-
     res.status(200).json(complaint);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 module.exports = {
     createComplaint,

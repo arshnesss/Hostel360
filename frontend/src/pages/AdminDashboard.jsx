@@ -304,118 +304,160 @@ const AdminDashboard = () => {
 
         {activeTab === "users" && <UserManagement />}
 
-        {/* COMPLAINTS TAB */}
-        {activeTab === "complaints" && (
-        <div className="space-y-6">
-            {/* 💡 FILTER HEADER: Shows when a filter is active so the admin can reset it */}
-            {filterStatus !== "All" && (
-            <button 
-                onClick={() => setFilterStatus("All")}
-                className="group flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-full border border-red-200 transition-all duration-200 shadow-sm"
-            >
-                <span className="text-[10px] font-black uppercase tracking-wider">
-                Showing: {filterStatus}
-                </span>
-                <div className="bg-red-700 text-white rounded-full p-0.5 group-hover:scale-110 transition-transform">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                </div>
-            </button>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fadeIn">
-            {/* 1. We first filter the array based on filterStatus */}
-            {complaints.filter(c => filterStatus === "All" || c.status === filterStatus).length === 0 ? (
-                <div className="col-span-full text-center p-20 bg-base-200 rounded-3xl border border-dashed border-base-300">
-                <p className="opacity-50 italic">No {filterStatus !== "All" ? filterStatus : ""} complaints found</p>
-                </div>
-            ) : (
-                // 2. Then we map over the filtered list
-                complaints
-                .filter(c => filterStatus === "All" || c.status === filterStatus)
-                .map((c) => {
-                    const isResolved = c.status === "Resolved";
-                    const isAssigned = !!c.warden;
-                    const canAssign = selectedWarden[c._id] && !isResolved;
-
-                    return (
-                    <div key={c._id} className="bg-base-200 p-6 rounded-3xl border border-base-300 shadow-md hover:shadow-xl transition-all group">
-                        {/* --- Complaint Card Header --- */}
-                        <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <h2 className="text-xl font-black group-hover:text-blue-600 transition-colors">{c.title}</h2>
-                            <p className="text-[10px] font-black uppercase opacity-40 mt-1 tracking-widest">
-                            {c.category} | Block {c.block || "N/A"}
-                            </p>
-                        </div>
-                        <span className={`px-3 py-1 text-[11px] rounded-full border font-bold ${getStatusClasses(c.status)}`}>
-                            {c.status.toUpperCase()}
-                        </span>
-                        </div>
-
-                        {/* --- Student & Warden Info --- */}
-                        <div className="grid grid-cols-2 gap-4 bg-base-100 p-4 rounded-2xl border border-base-300 mb-6 text-sm">
-                        <div>
-                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Student</p>
-                            <p className="font-bold truncate">{c.student?.name || "N/A"}</p>
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Assigned Warden</p>
-                            <p className={`font-black ${isAssigned ? "text-blue-600" : "text-error italic"}`}>
-                            {c.warden?.name || "Unassigned"}
-                            </p>
-                        </div>
-                        </div>
-
-                        {/* --- Oversight Actions --- */}
-                        <div className="bg-base-100 p-4 rounded-2xl border border-base-300 space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase opacity-40 ml-1">Status Oversight</label>
-                            <select
-                            value={c.status}
-                            onChange={(e) => handleStatusChange(c._id, e.target.value)}
-                            disabled={isResolved}
-                            className="select select-bordered select-sm w-full font-bold bg-base-200"
-                            >
-                            <option>Open</option>
-                            <option>In Progress</option>
-                            <option>Resolved</option>
-                            <option>Critical</option>
-                            </select>
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black uppercase opacity-40 ml-1">Warden Delegation</label>
-                            <div className="flex gap-2">
-                            <select
-                                value={selectedWarden[c._id] || ""}
-                                onChange={(e) => setSelectedWarden((prev) => ({ ...prev, [c._id]: e.target.value }))}
-                                disabled={isResolved}
-                                className="select select-bordered select-sm flex-1 font-bold bg-base-200"
-                            >
-                                <option value="">{isAssigned ? "Reassign Warden" : "Select Warden"}</option>
-                                {wardens.map((w) => (
-                                <option key={w._id} value={w._id}>{w.name} (Block {w.block})</option>
-                                ))}
-                            </select>
-                            <button
-                                disabled={!canAssign}
-                                onClick={() => handleAssignWarden(c._id)}
-                                className={`btn btn-sm px-4 font-black uppercase text-[10px] ${canAssign ? "btn-primary" : "btn-disabled"}`}
-                            >
-                                {isAssigned ? "Update" : "Assign"}
-                            </button>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    );
-                })
-            )}
-            </div>
+{/* COMPLAINTS TAB */}
+{activeTab === "complaints" && (
+  <div className="space-y-6">
+    {/* 💡 FILTER HEADER */}
+    {filterStatus !== "All" && (
+      <button 
+        onClick={() => setFilterStatus("All")}
+        className="group flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-full border border-red-200 transition-all duration-200 shadow-sm mb-4"
+      >
+        <span className="text-[10px] font-black uppercase tracking-wider">
+          Showing: {filterStatus}
+        </span>
+        <div className="bg-red-700 text-white rounded-full p-0.5 group-hover:scale-110 transition-transform">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </div>
+      </button>
+    )}
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fadeIn">
+      {/* 1. Filter, then Sort, then Map */}
+      {complaints
+        .filter(c => filterStatus === "All" || c.status === filterStatus)
+        .slice() 
+        .sort((a, b) => {
+            const getScore = (comp) => {
+              const hoursOld = (new Date() - new Date(comp.createdAt)) / (1000 * 60 * 60);
+              // Priority Weights
+              let score = hoursOld; 
+              if (comp.status === "Critical") score += 1000;
+              if (comp.urgency === "High") score += 500;
+              // Resolved items lose all points and sink
+              if (comp.status === "Resolved") score = -100; 
+              return score;
+            };
+            return getScore(b) - getScore(a);
+        })
+        .length === 0 ? (
+          <div className="col-span-full text-center p-20 bg-base-200 rounded-3xl border border-dashed border-base-300">
+            <p className="opacity-50 italic font-medium">No {filterStatus !== "All" ? filterStatus : ""} complaints found</p>
+          </div>
+        ) : (
+          complaints
+            .filter(c => filterStatus === "All" || c.status === filterStatus)
+            .slice()
+            .sort((a, b) => {
+                const getScore = (comp) => {
+                  const hoursOld = (new Date() - new Date(comp.createdAt)) / (1000 * 60 * 60);
+                  let score = hoursOld; 
+                  if (comp.status === "Critical") score += 1000;
+                  if (comp.urgency === "High") score += 500;
+                  if (comp.status === "Resolved") score = -100; 
+                  return score;
+                };
+                return getScore(b) - getScore(a);
+            })
+            .map((c) => {
+              const isResolved = c.status === "Resolved";
+              const isAssigned = !!c.warden;
+              const canAssign = selectedWarden[c._id] && !isResolved;
+              
+              const hoursOld = Math.floor((new Date() - new Date(c.createdAt)) / (1000 * 60 * 60));
+              const isStale = hoursOld >= 24 && !isResolved;
+
+              return (
+                <div 
+                  key={c._id} 
+                  className={`relative bg-base-200 p-6 rounded-3xl border transition-all group overflow-hidden ${
+                    isStale ? "border-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.1)] bg-orange-50/5" : "border-base-300 shadow-md"
+                  }`}
+                >
+                  {/* 🔥 STALE ESCALATION BADGE */}
+                  {isStale && (
+                    <div className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] font-black px-4 py-1 rounded-bl-2xl uppercase tracking-tighter animate-pulse z-10">
+                      Escalated: {Math.floor(hoursOld / 24)}d Unresolved
+                    </div>
+                  )}
+
+                  {/* --- Header --- */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h2 className="text-xl font-black group-hover:text-blue-600 transition-colors">{c.title}</h2>
+                      <p className="text-[10px] font-black uppercase opacity-40 mt-1 tracking-widest">
+                        {c.category} | Block {c.block || "N/A"}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 text-[11px] rounded-full border font-bold ${getStatusClasses(c.status)}`}>
+                      {c.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* --- Info Grid --- */}
+                  <div className="grid grid-cols-2 gap-4 bg-base-100 p-4 rounded-2xl border border-base-300 mb-6 text-sm">
+                    <div>
+                      <p className="text-[9px] font-black uppercase opacity-40 mb-1">Student</p>
+                      <p className="font-bold truncate">{c.student?.name || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase opacity-40 mb-1">Assignee</p>
+                      <p className={`font-black ${isAssigned ? "text-blue-600" : "text-error italic"}`}>
+                        {c.warden?.name || "Unassigned"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* --- Controls --- */}
+                  <div className="bg-base-100 p-4 rounded-2xl border border-base-300 space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase opacity-40 ml-1">Update Status</label>
+                      <select
+                        value={c.status}
+                        onChange={(e) => handleStatusChange(c._id, e.target.value)}
+                        disabled={isResolved}
+                        className="select select-bordered select-sm w-full font-bold bg-base-200"
+                      >
+                        <option>Open</option>
+                        <option>In Progress</option>
+                        <option>Resolved</option>
+                        <option>Critical</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase opacity-40 ml-1">Warden Delegation</label>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedWarden[c._id] || ""}
+                          onChange={(e) => setSelectedWarden((prev) => ({ ...prev, [c._id]: e.target.value }))}
+                          disabled={isResolved}
+                          className="select select-bordered select-sm flex-1 font-bold bg-base-200"
+                        >
+                          <option value="">{isAssigned ? "Reassign" : "Select Warden"}</option>
+                          {wardens.map((w) => (
+                            <option key={w._id} value={w._id}>{w.name} (B-{w.block})</option>
+                          ))}
+                        </select>
+                        <button
+                          disabled={!canAssign}
+                          onClick={() => handleAssignWarden(c._id)}
+                          className={`btn btn-sm px-4 font-black uppercase text-[10px] ${canAssign ? "btn-primary" : "btn-disabled"}`}
+                        >
+                          {isAssigned ? "Update" : "Assign"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
         )}
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
