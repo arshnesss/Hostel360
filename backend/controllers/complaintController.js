@@ -1,6 +1,8 @@
 const Complaint = require("../models/Complaint");
 const { cloudinary } = require("../utils/cloudinary");
 const { analyzeImage } = require('../utils/aiTriage');
+const { emitComplaintCreated, emitComplaintUpdated, emitCriticalAlert } = require("../utils/socket");
+const { sendEmergencyAlert, sendStatusUpdateEmail } = require("../utils/emailService");
 
 // --- HELPER FUNCTION FOR SMART ESCALATION ---
 const calculatePriorityScore = (complaint) => {
@@ -9,12 +11,10 @@ const calculatePriorityScore = (complaint) => {
     const hoursStale = (now - filedDate) / (1000 * 60 * 60);
 
     let baseWeight = 0;
-    // Critical status gets a massive boost
     if (complaint.status === "Critical") baseWeight = 1000;
     else if (complaint.urgency === "High") baseWeight = 500;
     else if (complaint.urgency === "Medium") baseWeight = 250;
 
-    // Escalation: Add weight based on hours passed to push old tickets up
     const escalation = hoursStale * 2; 
 
     return baseWeight + escalation;
@@ -68,6 +68,22 @@ async function createComplaint(req, res) {
             aiTags: aiAnalysis.tags.length > 0 ? aiAnalysis.tags : ["Text-Triaged"]
         });
 
+        await complaint.populate("student", "name email");
+
+        // 🔌 WebSockets Live Broadcast
+        emitComplaintCreated(complaint);
+        if (isCritical) {
+            emitCriticalAlert(complaint);
+            // 📧 Send Emergency Email Alert
+            sendEmergencyAlert({
+                toEmail: process.env.ADMIN_EMAIL || 'admin@hostel360.com',
+                complaintTitle: complaint.title,
+                block: complaint.block,
+                category: complaint.category,
+                aiTags: complaint.aiTags
+            });
+        }
+
         res.status(201).json(complaint);
     } catch (err) {
         console.error("Submission Error:", err);
@@ -75,15 +91,14 @@ async function createComplaint(req, res) {
     }
 }
 
-// 2. ✅ FIXED: Get all complaints with SMART ESCALATION (Admin)
+// 2. Get all complaints with SMART ESCALATION (Admin)
 async function getAllComplaints(req, res) {
   try {
-    // Fetch all complaints
     const rawComplaints = await Complaint.find()
       .populate("student", "name email")
-      .populate("warden", "name email");
+      .populate("warden", "name email")
+      .populate("comments.user", "name role");
 
-    // Apply Priority Scoring and Sort
     const sortedComplaints = rawComplaints.map(c => {
         const score = calculatePriorityScore(c);
         return { ...c._doc, priorityScore: score };
@@ -99,7 +114,9 @@ async function getAllComplaints(req, res) {
 // 3. Get complaints for logged-in student
 async function getMyComplaints(req, res) {
     try {
-        const complaints = await Complaint.find({ student: req.user._id });
+        const complaints = await Complaint.find({ student: req.user._id })
+          .populate("warden", "name email")
+          .populate("comments.user", "name role");
         res.status(200).json(complaints);
     } catch (err) {
         console.error(err);
@@ -112,7 +129,9 @@ async function updateComplaint(req, res) {
   try {
     const { status, comment } = req.body;
 
-    const complaint = await Complaint.findById(req.params.id);
+    const complaint = await Complaint.findById(req.params.id)
+      .populate("student", "name email");
+      
     if (!complaint) return res.status(404).json({ message: "Complaint not found" });
 
     if (complaint.status === "Resolved") {
@@ -133,6 +152,21 @@ async function updateComplaint(req, res) {
 
     await complaint.save();
     await complaint.populate("comments.user", "name role");
+    await complaint.populate("warden", "name email");
+
+    // 🔌 WebSockets Live Broadcast
+    emitComplaintUpdated(complaint);
+
+    // 📧 Send Status Update Email to Student
+    if (complaint.student?.email) {
+      sendStatusUpdateEmail({
+        studentEmail: complaint.student.email,
+        studentName: complaint.student.name,
+        complaintTitle: complaint.title,
+        status: complaint.status,
+        comment: comment || ""
+      });
+    }
 
     res.status(200).json(complaint);
   } catch (err) {
@@ -155,6 +189,12 @@ const assignComplaint = async (req, res) => {
     complaint.assignedAt = new Date();
 
     await complaint.save();
+    await complaint.populate("student", "name email");
+    await complaint.populate("warden", "name email");
+
+    // 🔌 WebSockets Live Broadcast
+    emitComplaintUpdated(complaint);
+
     res.status(200).json(complaint);
   } catch (err) {
     console.error(err);

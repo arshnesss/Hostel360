@@ -20,8 +20,10 @@ Powered by **TensorFlow.js Computer Vision**, automated **NLP hazard detection**
 * **📊 Infrastructure Hotspot Heatmap**:
   * MongoDB aggregation matrix that plots complaint frequency by **Hostel Block** vs **Category** (Plumbing, Electrical, Cleanliness, Internet, Security, Other).
   * Color-coded intensity grid (Quiet $\to$ Active $\to$ Critical Hotspot with pulsing alerts) for instant administrative bottleneck identification.
-* **⚡ Real-Time Caching & Cache Invalidation**:
-  * Built using **Redux Toolkit & RTK Query** on the frontend, enabling instant cache invalidation (tag revalidation for `Complaints`, `Analytics`, and `Hotspots`) whenever actions occur.
+* **⚡ Real-Time Socket.io WebSockets & Live Cache Invalidation**:
+  * Persistent bi-directional WebSocket connections instantly broadcast new ticket filings, warden status updates, and emergency alerts across connected client dashboards in **<50ms without manual page refreshes**.
+* **📧 Automated Emergency Email Notifications (Nodemailer)**:
+  * Asynchronously dispatches HTML emergency alert emails to wardens and admins when `Critical` hazards are flagged by AI Triage, and emails resolution updates to students.
 
 ---
 
