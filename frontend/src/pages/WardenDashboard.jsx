@@ -147,7 +147,10 @@ const WardenDashboard = () => {
     </div>
   );
 
-  const filteredComplaints = complaints.filter((c) => c.status === activeTab);
+  const filteredComplaints = complaints.filter((c) => {
+    if (activeTab === "Open") return c.status === "Open" || c.status === "Critical";
+    return c.status === activeTab;
+  });
 
   return (
     <div className="p-4 md:p-8 bg-base-100 text-base-content min-h-screen transition-all duration-500">
@@ -225,7 +228,14 @@ const WardenDashboard = () => {
                   <div className="flex-1 space-y-6">
                     <div className="flex justify-between items-start">
                       <h2 className="text-2xl font-black tracking-tight group-hover:text-emerald-600 transition-colors">{c.title}</h2>
-                      <StatusBadge status={c.status} />
+                      <div className="flex items-center gap-2">
+                        {(c.status === "Critical" || c.urgency === "High") && (
+                          <span className="badge badge-error text-white font-black animate-pulse px-3 py-2">
+                            🚨 CRITICAL
+                          </span>
+                        )}
+                        <StatusBadge status={c.status} />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 bg-base-100/50 p-5 rounded-3xl border border-base-300 shadow-inner">
                       <div>

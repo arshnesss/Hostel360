@@ -12,6 +12,7 @@ const complaintSchema = new mongoose.Schema(
     block: { 
       type: String, 
       required: true,
+      default: "GENERAL",
       uppercase: true 
     },
     status: {

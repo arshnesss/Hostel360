@@ -45,10 +45,21 @@ const analyzeImage = async (imageUrl) => {
     const numPixels = 224 * 224;
     const values = new Int32Array(numPixels * 3);
 
+    let fieryPixels = 0;
+
     for (let i = 0; i < numPixels; i++) {
-      values[i * 3] = data[i * 4];
-      values[i * 3 + 1] = data[i * 4 + 1];
-      values[i * 3 + 2] = data[i * 4 + 2];
+      const r = data[i * 4];
+      const g = data[i * 4 + 1];
+      const b = data[i * 4 + 2];
+
+      values[i * 3] = r;
+      values[i * 3 + 1] = g;
+      values[i * 3 + 2] = b;
+
+      // Fiery/Spark RGB Flame Spectrum: High Red intensity, Red > Blue*1.5, Orange/Red glow
+      if (r > 150 && r > b * 1.4 && (g < r * 0.95)) {
+        fieryPixels++;
+      }
     }
 
     const imageTensor = tf.tensor3d(values, [224, 224, 3], 'int32');
@@ -60,10 +71,24 @@ const analyzeImage = async (imageUrl) => {
     }
 
     const tags = predictions.map(p => p.class.toLowerCase());
-    console.log("✅ AI Detected Tags:", tags);
+    
+    // Check if image contains bright fiery/spark pixels (>4% of pixels)
+    const flameRatio = fieryPixels / numPixels;
+    const isFiery = flameRatio > 0.04;
 
-    const hazardKeywords = ['fire', 'smoke', 'cell phone', 'remote', 'mouse', 'laptop', 'person', 'bottle', 'scissors', 'knife', 'tv'];
-    const isHazard = tags.some(tag => hazardKeywords.includes(tag));
+    if (isFiery) {
+      tags.push("fire-hazard", "flame-detected");
+    }
+
+    console.log(`✅ AI Detected Tags:`, tags, `(Flame Pixel Ratio: ${(flameRatio * 100).toFixed(1)}%)`);
+
+    const hazardKeywords = [
+      'fire', 'smoke', 'fire-hazard', 'flame-detected',
+      'cell phone', 'remote', 'mouse', 'laptop', 'person', 
+      'bottle', 'scissors', 'knife', 'tv', 'toaster', 'oven', 'microwave'
+    ];
+    
+    const isHazard = isFiery || tags.some(tag => hazardKeywords.includes(tag));
 
     return { urgency: isHazard ? "High" : "Low", tags };
   } catch (error) {

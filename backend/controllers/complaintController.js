@@ -1,4 +1,5 @@
 const Complaint = require("../models/Complaint");
+const User = require("../models/User");
 const { cloudinary } = require("../utils/cloudinary");
 const { analyzeImage } = require('../utils/aiTriage');
 const { emitComplaintCreated, emitComplaintUpdated, emitCriticalAlert } = require("../utils/socket");
@@ -74,13 +75,22 @@ async function createComplaint(req, res) {
         emitComplaintCreated(complaint);
         if (isCritical) {
             emitCriticalAlert(complaint);
-            // 📧 Send Emergency Email Alert
-            sendEmergencyAlert({
-                toEmail: process.env.ADMIN_EMAIL || 'admin@hostel360.com',
-                complaintTitle: complaint.title,
-                block: complaint.block,
-                category: complaint.category,
-                aiTags: complaint.aiTags
+            
+            // 📧 Send Emergency Email Alert to Admin & Block Wardens
+            const blockWardens = await User.find({ role: "warden", block: complaint.block });
+            const recipientEmails = [
+                process.env.ADMIN_EMAIL || 'admin@hostel360.com',
+                ...blockWardens.map(w => w.email)
+            ].filter(Boolean);
+
+            recipientEmails.forEach(email => {
+                sendEmergencyAlert({
+                    toEmail: email,
+                    complaintTitle: complaint.title,
+                    block: complaint.block,
+                    category: complaint.category,
+                    aiTags: complaint.aiTags
+                });
             });
         }
 
@@ -150,6 +160,8 @@ async function updateComplaint(req, res) {
       });
     }
 
+    if (!complaint.block) complaint.block = "GENERAL";
+
     await complaint.save();
     await complaint.populate("comments.user", "name role");
     await complaint.populate("warden", "name email");
@@ -187,6 +199,7 @@ const assignComplaint = async (req, res) => {
     complaint.warden = wardenId;
     if (complaint.status === "Open") complaint.status = "In Progress";
     complaint.assignedAt = new Date();
+    if (!complaint.block) complaint.block = "GENERAL";
 
     await complaint.save();
     await complaint.populate("student", "name email");
@@ -194,6 +207,17 @@ const assignComplaint = async (req, res) => {
 
     // 🔌 WebSockets Live Broadcast
     emitComplaintUpdated(complaint);
+
+    // 📧 Send Email Alert to Assigned Warden
+    if (complaint.warden?.email) {
+      sendEmergencyAlert({
+        toEmail: complaint.warden.email,
+        complaintTitle: complaint.title,
+        block: complaint.block,
+        category: complaint.category,
+        aiTags: complaint.aiTags
+      });
+    }
 
     res.status(200).json(complaint);
   } catch (err) {
