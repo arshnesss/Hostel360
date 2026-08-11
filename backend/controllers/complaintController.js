@@ -32,16 +32,25 @@ async function createComplaint(req, res) {
             title.toLowerCase().includes(word) || 
             description.toLowerCase().includes(word)
         );
-        const categoryIsHazard = category.toLowerCase() === 'electricity';
+        const categoryIsHazard = ['electrical', 'electricity'].includes(category.toLowerCase());
 
         if (image) {
-            const uploadResponse = await cloudinary.uploader.upload(image, { folder: "hostel_complaints" });
-            imageUrl = uploadResponse.secure_url;
+            try {
+                if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== "your_cloud_name") {
+                    const uploadResponse = await cloudinary.uploader.upload(image, { folder: "hostel_complaints" });
+                    imageUrl = uploadResponse.secure_url;
+                } else {
+                    imageUrl = image;
+                }
+            } catch (cloudErr) {
+                console.log("⚠️ Cloudinary upload skipped/failed - using direct image data fallback");
+                imageUrl = image;
+            }
 
             try {
                 aiAnalysis = await analyzeImage(imageUrl);
             } catch (aiErr) {
-                console.log("⚠️ AI Memory Limit Hit - Falling back to Text Triage");
+                console.log("⚠️ AI Analysis Error - Falling back to Text Triage:", aiErr.message);
             }
         }
 

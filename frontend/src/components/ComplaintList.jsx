@@ -4,14 +4,16 @@ import { Clock, CheckCircle, User, MessageSquare, Calendar } from 'lucide-react'
 // Helper function for status badge styling - Updated for semantic colors
 const getStatusClasses = (status) => {
   switch (status) {
+    case "Critical":
+      return "bg-red-600 text-white animate-pulse font-black";
     case "Open":
-      return "badge-error text-white";
+      return "badge-error text-white font-bold";
     case "In Progress":
-      return "badge-info text-white";
+      return "badge-info text-white font-bold";
     case "Resolved":
-      return "badge-success text-white";
+      return "badge-success text-white font-bold";
     default:
-      return "badge-ghost";
+      return "badge-ghost font-bold";
   }
 };
 
@@ -41,13 +43,35 @@ export default function ComplaintList({ complaints = [], isLoading }) {
         >
           {/* 1. Header Section */}
           <div className="p-5 border-b border-base-300 bg-base-300/30 flex justify-between items-center">
-            <h3 className="text-lg font-black tracking-tight">{c.title}</h3>
-            <span className={`badge badge-md font-bold py-3 px-4 ${getStatusClasses(c.status)}`}>
-              {c.status.toUpperCase()}
-            </span>
+            <div>
+              <h3 className="text-lg font-black tracking-tight">{c.title}</h3>
+              <p className="text-[10px] font-black uppercase opacity-50 tracking-widest mt-0.5">Block {c.block || "General"}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {c.urgency === "High" && (
+                <span className="badge badge-error badge-sm text-white font-black animate-bounce">
+                  ⚡ HIGH RISK
+                </span>
+              )}
+              <span className={`badge badge-md font-bold py-3 px-4 ${getStatusClasses(c.status)}`}>
+                {c.status.toUpperCase()}
+              </span>
+            </div>
           </div>
 
           <div className="p-6 space-y-6">
+            {/* AI Diagnostics Tags */}
+            {c.aiTags && c.aiTags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 bg-base-100 p-3 rounded-xl border border-base-300">
+                <span className="text-[10px] font-black uppercase opacity-40 mr-1">🤖 AI Diagnostics:</span>
+                {c.aiTags.map((tag, idx) => (
+                  <span key={idx} className="badge badge-sm badge-outline text-[10px] font-bold">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* 2. Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 text-sm">

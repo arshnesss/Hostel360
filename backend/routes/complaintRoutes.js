@@ -42,17 +42,14 @@ router.get(
   "/",
   protect,
   authorizeRoles("admin", "warden"),
-  async (req, res) => {
-    try {
-      const complaints = await Complaint.find()
-        .populate("student", "name email")
-        .populate("warden", "name email")
-        .populate("comments.user", "name");
-      res.status(200).json(complaints);
-    } catch (err) {
-      res.status(500).json({ message: "Server error" });
-    }
-  }
+  complaintController.getAllComplaints
+);
+
+router.get(
+  "/all",
+  protect,
+  authorizeRoles("admin", "warden"),
+  complaintController.getAllComplaints
 );
 
 router.put(
@@ -78,9 +75,14 @@ router.get(
   authorizeRoles("warden"),
   async (req, res) => {
     try {
-      const complaints = await Complaint.find({ warden: req.user._id })
+      const queryFilter = req.user.block 
+        ? { $or: [{ warden: req.user._id }, { block: req.user.block }] }
+        : { warden: req.user._id };
+
+      const complaints = await Complaint.find(queryFilter)
         .populate("student", "name email")
-        .populate("comments.user", "name");
+        .populate("warden", "name email")
+        .populate("comments.user", "name role");
       res.status(200).json(complaints);
     } catch (err) {
       res.status(500).json({ message: "Server error" });
